@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Banking Agent</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #f5f7fa; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .container { width: 480px; max-width: 100%; height: 700px; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+        .header { background: #1a73e8; color: white; padding: 20px; text-align: center; font-size: 18px; font-weight: 600; }
+        .header small { display: block; font-weight: 400; font-size: 12px; opacity: 0.8; }
+        .messages { flex: 1; padding: 20px; overflow-y: auto; background: #f8f9fc; }
+        .msg { margin-bottom: 16px; max-width: 85%; padding: 12px 16px; border-radius: 12px; line-height: 1.5; word-wrap: break-word; }
+        .msg.user { background: #1a73e8; color: white; margin-left: auto; border-bottom-right-radius: 4px; }
+        .msg.bot { background: white; color: #1a1a1a; margin-right: auto; border-bottom-left-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .msg .time { font-size: 10px; opacity: 0.5; margin-top: 4px; display: block; }
+        .input-area { display: flex; gap: 10px; padding: 16px 20px; background: white; border-top: 1px solid #e8ecf0; }
+        .input-area input { flex: 1; padding: 12px 16px; border: 1px solid #d0d5dd; border-radius: 24px; outline: none; font-size: 14px; transition: border 0.2s; }
+        .input-area input:focus { border-color: #1a73e8; }
+        .input-area button { padding: 12px 24px; background: #1a73e8; color: white; border: none; border-radius: 24px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+        .input-area button:hover { background: #1557b0; }
+        .input-area button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .quick-actions { display: flex; gap: 8px; padding: 8px 20px 16px; flex-wrap: wrap; background: white; border-top: 1px solid #e8ecf0; }
+        .quick-actions button { padding: 6px 14px; border: 1px solid #d0d5dd; border-radius: 20px; background: white; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .quick-actions button:hover { border-color: #1a73e8; color: #1a73e8; }
+        .typing { color: #666; font-size: 13px; padding: 8px 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            🤖 AI Banking Agent
+            <small>深圳国际金融科技大赛 · 智能银行助手</small>
+        </div>
+        <div class="messages" id="messages">
+            <div class="msg bot">👋 您好！我是AI银行助手。<br>试试输入：<br>• 转500给张三<br>• 这个月账单花了多少<br>• 300块3个人AA</div>
+        </div>
+        <div class="quick-actions">
+            <button onclick="quickSend('转500给张三')">💸 转账</button>
+            <button onclick="quickSend('这个月账单')">📊 账单</button>
+            <button onclick="quickSend('300块3个人AA')">👥 AA</button>
+        </div>
+        <div class="input-area">
+            <input id="input" type="text" placeholder="输入指令..." onkeydown="if(event.key==='Enter') send()">
+            <button id="sendBtn" onclick="send()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        const messagesEl = document.getElementById('messages');
+        const inputEl = document.getElementById('input');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function addMessage(text, type) {
+            const div = document.createElement('div');
+            div.className = `msg ${type}`;
+            div.innerHTML = text.replace(/\n/g, '<br>');
+            messagesEl.appendChild(div);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function quickSend(text) {
+            inputEl.value = text;
+            send();
+        }
+
+        async function send() {
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            addMessage(text, 'user');
+            inputEl.value = '';
+            sendBtn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                const data = await resp.json();
+                addMessage(data.reply || '没有收到回复', 'bot');
+            } catch (err) {
+                addMessage('⚠️ 网络错误，请检查服务是否启动', 'bot');
+            } finally {
+                sendBtn.disabled = false;
+                inputEl.focus();
+            }
+        }
+    </script>
+</body>
+</html>··
